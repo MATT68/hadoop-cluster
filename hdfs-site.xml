@@ -1,0 +1,19 @@
+<configuration>
+	  <property>
+	    <name>dfs.namenode.name.dir</name>
+	    <value>file:/home/hadoop/workspace/dfs/name</value>
+	    <description>/usr/local/hadoop/data/namenode</description>
+	  </property>
+ 
+	  <property>
+	    <name>dfs.datanode.data.dir</name>
+	    <value>file:/home/hadoop/workspace/dfs/data</value>
+	    <description>/usr/local/hadoop/data/datanode</description>
+	  </property>
+ 
+	  <property>
+	      <name>dfs.replication</name>
+	      <value>1</value>
+	      <description>Factor de replicacion. Lo ponemos a 1 porque solo tenemos un cluster con solo 1 maquina.</description>
+	  </property>
+</configuration>

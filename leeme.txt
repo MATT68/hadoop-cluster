@@ -1,0 +1,64 @@
+Para que el pseudo-cluster funcione.
+
+1.- Debemos tener disponible la imagen matt68/hadoop-base
+
+2.- Comprobar que tenemos todos los ficheros en el directorio de trabajo:
+PS D:\docker\hadoop_pseudocluster_en_docker> ls
+
+
+    Directory: D:\docker\hadoop_pseudocluster_en_docker
+
+
+Mode                LastWriteTime         Length Name
+----                -------------         ------ ----
+-a----       09/04/2019     22:18            106 .dockerignore
+-a----       10/04/2019     13:31            505 bootstrap.sh
+-a----       10/04/2019     11:57           1337 config-format-start-hadoop.sh
+-a----       04/04/2019      0:58             67 config_ssh.txt
+-a----       07/04/2019     18:22            209 core-site.xml
+-a----       02/04/2019     22:58           5141 CreandoUnaImagenDockerHadoop.txt
+-a----       10/04/2019     13:08           6533 Dockerfile
+-a----       04/04/2019     15:45           7254 Hadoop-base.txt
+-a----       07/04/2019     18:20            648 hdfs-site.xml
+-a----       09/04/2019     22:24            264 leeme.txt
+-a----       07/04/2019     18:36            347 mapred-site.xml
+-a----       10/04/2019     11:56            769 TareasInicio.sh
+-a----       05/04/2019     12:01            560 yarn-site.xml
+
+3.- Crear la nueva imagen docker build. Con el Dockerfile y a partir de los ficheros disponibles 
+    en el directorio -el contexto- va creando la imagen:
+ 
+  docker build -t matt68/hadoop-pseudo-cl .
+
+
+4.- Una vez creada la imagen debemos ejecutar una instancia de la imagen -un container-.
+    Para ello lanzamos el container con docker run.
+    Este comando realiza además las últimas configuraciones que hemos especificado con el script del entrypoint.
+
+    docker run --name hadoop2 -p 8088:8088 -p 9866:9866 -p 9870:9870 -p 9820:9820 -ti matt68/hadoop-pseudo-cl
+
+ Debemos darle tiempo para que se configuren y arranquen todos los servicios del cluster.
+ comprobar con el comando jps si se han levantado todos (deberíamos tener algo así): 
+
+root@d42d6ce2a744:/home/hadoop# jps
+193 NameNode
+836 NodeManager
+1208 Jps
+729 ResourceManager
+462 SecondaryNameNode
+303 DataNode
+
+Una vez se ejecuta correctamente el "docker run " entramos en la shell y además se abren los puertos.
+
+Para ver el cluster podemos conectarnos con un navegador a :
+http://localhost:8088/cluster/cluster
+http://192.168.99.100:8088/cluster/cluster
+
+Para ver información sobre el NameNode;
+http://localhost:9870/
+http://192.168.99.100:9870
+
+5.- Si salimos del container y se para:
+docker start hadoop2 
+docker exec -ti hadoop2 /bin/bash
+

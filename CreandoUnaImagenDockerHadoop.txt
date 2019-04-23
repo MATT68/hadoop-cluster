@@ -1,0 +1,91 @@
+
+Para configurar un Cluster de Hadoop en Docker, vamos a ir realizando los siguientes puntos:
+
+ 1- Configurar la imagen base
+
+ 2- Crear el usuario hadoop, descomprimir hadoop y hacer la configuración mínima 
+   de una máquina con un pseudo cluster hadoop instalado.
+
+ 3- Una vez que controlemos el pseudo cluster, haremos una instalación de un cluster hadoop de varias máquinas. 
+
+******************************************************************************************************************************************
+
+Además debemos tener en cuenta algunos requisitos de docker que se deben cumplir a la hora de ejecutar aplicaciones hadoop dentro de docker:
+
+First, the Docker container will be explicitly launched with the application owner as the container user. If the application owner is not a valid user in the Docker image, the application will fail. The container user is specified by the user’s UID. If the user’s UID is different between the NodeManager host and the Docker image, the container may be launched as the wrong user or may fail to launch because the UID does not exist. See User Management in Docker Container section for more details.
+
+Second, the Docker image must have whatever is expected by the application in order to execute. In the case of Hadoop (MapReduce or Spark), the Docker image must contain the JRE and Hadoop libraries and have the necessary environment variables set: JAVA_HOME, HADOOP_COMMON_PATH, HADOOP_HDFS_HOME, HADOOP_MAPRED_HOME, HADOOP_YARN_HOME, and HADOOP_CONF_DIR. Note that the Java and Hadoop component versions available in the Docker image must be compatible with what’s installed on the cluster and in any other Docker images being used for other tasks of the same job. Otherwise the Hadoop components started in the Docker container may be unable to communicate with external Hadoop components.
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+1.- Configurar la imagen base.
+  Vamos a empezar creando una imagen de docker básica:
+
+ Para crear esta imagen, vamos a partir de un Dockerfile que tiene incorporado los elementos base
+ para que Hadoop funcione correctamente:
+ 1.- Una imagen base, p.e. ubuntu:16.04
+ 1.- JDK 1.8
+ 2.- Hadoop 3.2
+
+ El Dockerfile sería algo así:
+
+******************************************************************************************************************************************
+FROM ubuntu:16.04
+
+# Lo primero son los paquetes necesarios para acceder a HDFS
+# JDK y Hadoop
+RUN apt-get update && apt-get install -y openjdk-8-jdk wget
+RUN wget http://apache.cs.utah.edu/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
+RUN tar zxf hadoop-3.2.0.tar.gz && rm -f hadoop-3.2.0.tar.gz
+
+# Descargamos algunas librerias necesarias ahora
+# y otras que necesitaremos mas adelante 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        apt-utils        \ 
+        build-essential  \ 
+        curl             \ 
+	iproute2         \ 
+	iputils-ping     \
+        libfreetype6-dev \
+        libpng12-dev     \
+        libzmq3-dev      \
+	openssh-client   \
+	openssh-server   \
+	pdsh             \
+        pkg-config       \
+        rsync            \ 
+        software-properties-common \
+	sudo             \
+	ssh              \
+        unzip            \
+	vim              \ 
+        &&               \
+    apt-get clean &&     \
+    rm -rf /var/lib/apt/lists/*
+
+# Definimos variables de entorno 
+ENV JAVA_HOME  usr/lib/jvm/java-1.8.0-openjdk-amd64
+ENV PATH $PATH:$JAVA_HOME/bin
+
+# Configuramos el ssh sin password
+RUN rm -f /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa
+RUN ssh-keygen -q -N "" -t dsa -f /etc/ssh/ssh_host_dsa_key
+RUN ssh-keygen -q -N "" -t rsa -f /etc/ssh/ssh_host_rsa_key
+RUN ssh-keygen -q -N "" -t rsa -f /root/.ssh/id_rsa
+RUN mkdir /root/.ssh/authorized_keys
+RUN cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
+	
+# Creamos usuario y grupo:  hdadmin:hadoop	
+RUN groupadd hadoop
+RUN useradd  hdadmin -g hadoop -m
+
+
+******************************************************************************************************************************************
+******************************************************************************************************************************************
+ 2- Crear el usuario hadoop, descomprimir hadoop y hacer la configuración mínima 
+   de una máquina con un pseudo cluster hadoop instalado.
+******************************************************************************************************************************************
+El siguiente punto sería empezar a configurar la imagen, desplegando hadoop, creando el usuario hadoop y haciendo 
+el despliegue mínimo de una máquina con un pseudo cluster hadoop instalado.
+
+Una vez que controlemos el pseudo cluster, haremos una instalación de un cluster hadoop de varias máquinas. 

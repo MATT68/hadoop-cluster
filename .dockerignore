@@ -1,0 +1,4 @@
+# Excluimos del contexto los ficheros siguientes
+*.bak
+CreandoUnaImagenDockerHadoop.txt
+Hadoop-base.txt

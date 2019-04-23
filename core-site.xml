@@ -1,0 +1,7 @@
+<configuration>
+  <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://localhost:9000</value>
+	<description>Nombre del filesystem por defecto.</description>
+    </property>
+</configuration>

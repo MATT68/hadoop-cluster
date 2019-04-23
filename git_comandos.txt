@@ -1,0 +1,33 @@
+﻿-- Configuramos el pc para conectarse al repositorio remoto
+git init
+git config --global user.name "matt68"
+git config --global user.email "matiyoli@gmail.com"
+   
+git remote -v
+
+git remote remove hadoop-base
+git remote add  hadoop-base https://github.com/MATT68/hadoop-base.git
+
+git add .
+git commit .
+
+git pull --all
+git fetch --all
+
+git pull <remote_repository> <branch>
+git pull    hadoop-base    master
+
+git push --all --repo=hadoop-base
+git push --all --repo=hadoop-base --force
+
+Una vez definido todo, la forma de trabajar es:
+
+Creamos o modificamos un fichero: ejemplo.txt
+-- lanzamos git add para que se añada este cambio y luego el commit
+git add .
+git commit .
+-- Y por ultimo hacemos el push para que se suban a la web los ficheros
+-- cambiados
+git push --all --repo=hadoop-base
+
+

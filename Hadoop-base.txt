@@ -1,0 +1,175 @@
+﻿Para configurar Hadoop debemos ir realizando varias tareas y preparando algunos ficheros:
+
+1.- Descargar Java y descomprimirlo. 
+    Una vez descomprimido e insalado deberemos configurar el JAVA_HOME
+    como variable de entorno de docker.
+
+2.- Descargar Hadoop y descomprimirlo. 
+    Crear un link simbólico del hadoop descargado al dir /usr/local/hadoop
+    Cambiar el propietario al directorio  /usr/local/hadoop
+	
+3.- Descargar librerías necesarias: ssh, rsync, etc.
+
+4.- Definir variables de entorno. 
+    Si es directo en linux, editar el ~/.bashrc y añadir las variables.
+    En dockerfile definimos variables con ENV.
+	
+5.- Configurar ssh para conexiones sin password. Arrancar el servicio ssh.
+
+    Podemos crear el fichero ~/.ssh/config con estas tres líneas para evitar confirmar las 
+    conexiones a cada host: 
+       Host *  
+       UserKnownHostsFile /dev/null 
+       StrictHostKeyChecking no
+    
+6.- Configurar /var/log
+
+7.- Configurar los ficheros de Hadoop (con el contenido que se muestra debajo)
+    En el directorio /usr/local/hadoop/etc/hadoop debemos tener: 
+	core-site.xml
+	mapred-site.xml.template
+	hdfs-site.xml
+	yarn-site.xml
+
+8.- Inicializar hdfs
+   Si intentamos crear un directorio, al principio da este error:
+
+  hadoop@a33cb6ab76ba:~$ hadoop fs -mkdir PrimerDirectorio
+  mkdir: `hdfs://localhost:9000/user/hadoop': No such file or directory
+  
+  Debemos inicializar hdfs creando el directorio base:
+
+hadoop@a33cb6ab76ba:~$ hdfs dfs -mkdir -p /user/hadoop
+hadoop@a33cb6ab76ba:~$ hadoop fs -mkdir PrimerDirectorio
+hadoop@a33cb6ab76ba:~$ hadoop fs -ls
+Found 1 items
+drwxr-xr-x   - hadoop supergroup          0 2019-04-04 09:36 PrimerDirectorio
+
+9.- Comprobando configuraciones.
+   Podemos lanzar:
+   hadoop checknative
+    (Ver las salidas más abajo)
+
+********************************************************************************************************
+7.- Contenido de los ficheros:
+	
+core-site.xml
+<configuration>
+   <property>
+       <name>fs.defaultFS</name>
+       <value>hdfs://localhost:9000</value>
+   </property>
+</configuration>
+
+Copiamos mapred-site.xml.template en mapred-site.xml y editamos:
+	
+mapred-site.xml   
+<configuration>
+   <property>
+       <name>mapreduce.framework.name</name>
+       <value>yarn</value>
+   </property>
+</configuration>	
+
+Debemos crear los directorios : 
+/home/hadoop/workspace/dfs/name
+/home/hadoop/workspace/dfs/data
+Y luego podemos editar el siguiente fichero:
+(Como tenemos un pseudo cluster no tiene sentido indicar un factor de
+replicación mayor de 1)
+
+hdfs-site.xml
+	<configuration>
+	  <property>
+	    <name>dfs.namenode.name.dir</name>
+	    <value>file:/home/hadoop/workspace/dfs/name</value>
+	    <description>/usr/local/hadoop/data/namenode</description>
+	  </property>
+ 
+	  <property>
+	    <name>dfs.datanode.data.dir</name>
+	    <value>file:/home/hadoop/workspace/dfs/data</value>
+	    <description>/usr/local/hadoop/data/datanode</description>
+	  </property>
+ 
+	  <property>
+	      <name>dfs.replication</name>
+	      <value>1</value>
+	      <description>Factor de replicación. Lo ponemos a 1 porque sólo tenemos 1 máquina.</description>
+	  </property>
+	</configuration>
+	
+
+yarn-site.xml
+<configuration>
+   <property>
+    	<name>yarn.nodemanager.aux-services</name>
+    	<value>mapreduce_shuffle</value>
+   </property>
+   <property>
+      	<name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>  
+	<value>org.apache.hadoop.mapred.ShuffleHandler</value>
+   </property>
+</configuration>
+
+********************************************************************************************************
+********************************************************************************************************
+
+9.- Con hadoop checknative podemos comprobar si está todo ok.
+    En este ejemplo faltaba la libreria snappy para compresion.
+
+hadoop@a33cb6ab76ba:~$ hadoop checknative
+2019-04-04 12:22:11,570 INFO bzip2.Bzip2Factory: Successfully loaded & initialize
+2019-04-04 12:22:11,586 INFO zlib.ZlibFactory: Successfully loaded & initialized
+2019-04-04 12:22:11,598 WARN zstd.ZStandardCompressor: Error loading zstandard na
+: cannot open shared object file: No such file or directory)!
+2019-04-04 12:22:11,611 ERROR snappy.SnappyCompressor: failed to load SnappyCompr
+java.lang.UnsatisfiedLinkError: Cannot load libsnappy.so.1 (libsnappy.so.1: canno
+        at org.apache.hadoop.io.compress.snappy.SnappyCompressor.initIDs(Native M
+        at org.apache.hadoop.io.compress.snappy.SnappyCompressor.<clinit>(SnappyC
+        at org.apache.hadoop.io.compress.SnappyCodec.isNativeCodeLoaded(SnappyCod
+        at org.apache.hadoop.util.NativeLibraryChecker.main(NativeLibraryChecker.
+2019-04-04 12:22:11,626 WARN erasurecode.ErasureCodeNative: ISA-L support is not
+Native library checking:
+hadoop:  true /usr/local/hadoop-3.2.0/lib/native/libhadoop.so.1.0.0
+zlib:    true /lib/x86_64-linux-gnu/libz.so.1
+zstd  :  false
+snappy:  false
+lz4:     true revision:10301
+bzip2:   true /lib/x86_64-linux-gnu/libbz2.so.1
+openssl: false Cannot load libcrypto.so (libcrypto.so: cannot open shared object
+ISA-L:   false libhadoop was built without ISA-L support
+hadoop@a33cb6ab76ba:~$ hadoop conftest
+/usr/local/hadoop/etc/hadoop/kms-acls.xml: valid
+/usr/local/hadoop/etc/hadoop/core-site.xml: valid
+/usr/local/hadoop/etc/hadoop/hdfs-site.xml: valid
+/usr/local/hadoop/etc/hadoop/mapred-site.xml: valid
+/usr/local/hadoop/etc/hadoop/kms-site.xml: valid
+/usr/local/hadoop/etc/hadoop/yarn-site.xml: valid
+/usr/local/hadoop/etc/hadoop/hadoop-policy.xml: valid
+/usr/local/hadoop/etc/hadoop/capacity-scheduler.xml: valid
+/usr/local/hadoop/etc/hadoop/httpfs-site.xml: valid
+OK
+********************************************************************************************************
+********************************************************************************************************
+Despues de lanzar "apt-get install snappy" volvemos a comprobar:
+
+hadoop@a33cb6ab76ba:/usr/local/hadoop$ hadoop checknative
+2019-04-04 13:25:23,501 INFO bzip2.Bzip2Factory: Successfully loaded & initialized native-bzip2 library system-native
+2019-04-04 13:25:23,514 INFO zlib.ZlibFactory: Successfully loaded & initialized native-zlib library
+2019-04-04 13:25:23,530 WARN zstd.ZStandardCompressor: Error loading zstandard native libraries: java.lang.InternalError: Cannot load libzstd.so.1 (libzstd.so.1
+: cannot open shared object file: No such file or directory)!
+2019-04-04 13:25:23,540 WARN erasurecode.ErasureCodeNative: ISA-L support is not available in your platform... using builtin-java codec where applicable
+Native library checking:
+hadoop:  true /usr/local/hadoop-3.2.0/lib/native/libhadoop.so.1.0.0
+zlib:    true /lib/x86_64-linux-gnu/libz.so.1
+zstd  :  false
+snappy:  true /usr/lib/x86_64-linux-gnu/libsnappy.so.1
+lz4:     true revision:10301
+bzip2:   true /lib/x86_64-linux-gnu/libbz2.so.1
+openssl: false Cannot load libcrypto.so (libcrypto.so: cannot open shared object file: No such file or directory)!
+ISA-L:   false libhadoop was built without ISA-L support
+hadoop@a33cb6ab76ba:/usr/local/hadoop$
+
+
+
