@@ -77,9 +77,6 @@ RUN rm -f /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_rsa_key /root/.ssh/id_rsa 
 # Copiamos  el fichero config_ssh 
 ADD config_ssh.txt /root/.ssh/config
 
-# Copiamos  el fichero con el nombre de los slaves del cluster 
-ADD slaves $HADOOP_HOME/etc/hadoop/slaves
-
 # Cambiamos el propietario del dir hadoop
 RUN chown hadoop:hadoop /usr/local/hadoop-$HADOOP_VERSION    
 
@@ -122,8 +119,6 @@ RUN \
          
 ADD bootstrap.sh /bootstrap.sh
 # RUN chmod 700 /etc/bootstrap.sh
-# Eliminamos los caracteres /r que hay al final de cada linea -Fin de linea de Windows -
-RUN sed -i "s/\r//" /bootstrap.sh 
 ENTRYPOINT ["bash", "/bootstrap.sh"] 
 CMD ["-bash"]
 
