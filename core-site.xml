@@ -1,7 +1,10 @@
 <configuration>
+  <property>		 
+    <name>fs.defaultFS</name>
+    <value>hdfs://hadoop-master:9820</value>
+  </property>
   <property>
-        <name>fs.defaultFS</name>
-        <value>hdfs://localhost:9000</value>
-	<description>Nombre del filesystem por defecto.</description>
-    </property>
+    <name>fs.default.name</name>
+    <value>hdfs://hadoop-master:9820</value>
+  </property>
 </configuration>
