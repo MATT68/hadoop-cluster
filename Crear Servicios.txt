@@ -1,0 +1,50 @@
+﻿-- Creamos la red:
+docker network create  `
+	-d overlay  `
+	--subnet=192.168.0.0/16   `
+	--ip-range=192.168.1.100/24  `
+	--gateway=192.168.1.1  `
+	--ingress `
+	--scope=swarm `
+	swarm-net
+
+- Start 3 slave nodes:
+
+    --entrypoint ["/bin/bash"] `
+
+docker service create `
+	--name hadoop-slave1 `
+	--endpoint-mode dnsrr `
+	--network swarm-net `
+	--hostname hadoop-slave1 `
+	--replicas 1 `
+    matt68/hadoop-node:3.2
+
+--network swarm-net `
+docker service create `
+	--name hadoop-slave2 `
+	--hostname hadoop-slave2 `
+	--replicas 1 `
+	--endpoint-mode dnsrr `
+	matt68/hadoop-node:3.2
+	
+
+--network swarm-net `
+docker service create `
+	--name hadoop-slave3 `
+	--hostname hadoop-slave3 `
+	--replicas 1 `
+	--endpoint-mode dnsrr `	
+	matt68/hadoop-node:3.2
+	
+- Start master node :
+(levantamos por último el master, porque al hacerlo se formatea el cluster)
+
+--network swarm-net `
+docker service create `
+	--name hadoop-master `
+	--hostname hadoop-master `
+	--constraint node.role==manager `
+	--replicas 1 `
+	--endpoint-mode dnsrr `
+	matt68/hadoop-node:3.2

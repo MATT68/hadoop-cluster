@@ -5,7 +5,7 @@
 #  Desc: Creacion de un pseudo cluster de hadoop. 
 #        Partiendo de la imagen base de hadoop (matt68/hadoop-base) hacemos la configuracion y arranque del cluster.
 #
-#        matt68/hadoop-pseudocluster-en-docker
+#        matt68/hadoop-node:3.2
 #
 FROM matt68/hadoop-base
 LABEL MAINTAINER="Matias Andres (https://www.linkedin.com/in/matias-andres-formador-db2-jcl-datastage-52a46b31/)"
@@ -21,7 +21,6 @@ USER root
 # RUN apt-get update && apt-get install -y netbase          
 # FIN   Lineas que deben aparecer en la imagen base : 
 ###############################################################################
-
 
 # Hacemos sobre la imagen base  
 # el resto de configuraciones para iniciar un pseudo cluster hadoop.
@@ -40,9 +39,9 @@ ENV  YARN_CONF_DIR      ${HADOOP_PREFIX}/etc/hadoop
 
 # Creamos usuario hadoop y grupo hadoop	
 # Y agregamos el user hadoop a los sudoers
-RUN groupadd hadoop              && \
+RUN groupadd hadoop                        && \
     useradd  hadoop -g hadoop -m -p forma2 && \
-	  usermod -a -G sudo hadoop
+	usermod -a -G sudo hadoop
 
 ### Exportamos las variables de entorno para el usuario hadoop
 ### Ya que las variables ENV anteriores no se cargan en el usuario hadoop
@@ -107,25 +106,24 @@ RUN echo ' ## Desactivmos IPv6 porque Hadoop no lo admite '               && \
     echo 'net.ipv6.conf.default.disable_ipv6 = 1 ' >> /etc/sysctl.conf    && \ 
     echo 'net.ipv6.conf.lo.disable_ipv6 = 1 '      >> /etc/sysctl.conf         && \ 
 # Actualizamos JAVA_HOME y HADOOP_CONF_DIR en hadoop-env.sh
-    sed -i "/export JAVA_HOME/ s:.*:export JAVA_HOME=${JAVA_HOME}\n export HADOOP_HOME=${HADOOP_HOME}\n export HADOOP_PREFIX=${HADOOP_PREFIX}:" ${HADOOP_HOME}/etc/hadoop/hadoop-env.sh       && \ 
+    sed -i '/export JAVA_HOME/ s:.*:export JAVA_HOME=${JAVA_HOME}\n export HADOOP_HOME=${HADOOP_HOME}\n export HADOOP_PREFIX=${HADOOP_PREFIX}:' ${HADOOP_HOME}/etc/hadoop/hadoop-env.sh       && \ 
     sed -i '/export HADOOP_CONF_DIR/ s:.*:export HADOOP_CONF_DIR=$HADOOP_PREFIX/etc/hadoop/:' "$HADOOP_PREFIX/etc/hadoop/hadoop-env.sh"        
 
-# El TareasInicio.sh levanta el ssh y lanza config-format-start-hadoop.sh como usuario hadoop
-# En el script config-format-start-hadoop.sh se formatea el cluster y se lanzan los servicios hadoop
+# El TareasInicio.sh levanta el ssh 
 COPY TareasInicio.sh   /
-COPY config-format-start-hadoop.sh /
 # Les quitamos a los dos ficheros los caracteres /r que hay al final de cada linea -Fin de linea de Windows -
 RUN \ 
     sed -i "s/\r//" /TareasInicio.sh                && \
-    sed -i "s/\r//" /config-format-start-hadoop.sh  && \
     /TareasInicio.sh
          
 ADD bootstrap.sh /bootstrap.sh
 # RUN chmod 700 /etc/bootstrap.sh
 # Eliminamos los caracteres /r que hay al final de cada linea -Fin de linea de Windows -
 RUN sed -i "s/\r//" /bootstrap.sh 
-ENTRYPOINT ["bash", "/bootstrap.sh"] 
+# En el script bootstrap.sh se formatea el cluster y se lanzan los servicios hadoop
+ENTRYPOINT ["/bootstrap.sh", "top"] 
 CMD ["-bash"]
+
 
 # Fijamos el directorio de trabajo 
 WORKDIR /home/hadoop

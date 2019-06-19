@@ -1,4 +1,4 @@
-
+﻿
  Lanzando el cluster de hadoop en docker:
  
  1.- Tenemos creada la image base, hadoop-base.
@@ -26,41 +26,55 @@
  5.- Debemos definir/arrancar cada servicio del swarm :
     browse start_hadoop.sh for full script
 
-  xx -- Start master node
-   docker service create \
-	--name hadoop-master \
-	--network swarm-net \
-	--hostname hadoop-master \
-	--constraint node.role==manager \
-	--replicas 1 \
-	--endpoint-mode dnsrr \
-	matt68/hadooop-node:3.2
-	
-   xx -- Start 3 slaves
-   docker service create \
-	--name hadoop-slave1 \
-	--network swarm-net \
-	--hostname hadoop-slave1 \
-	--replicas 1 \
-	--endpoint-mode dnsrr \
-	matt68/hadooop-node:3.2
+ Antes de levantar cada servicio debemos tener el swarm con sus nodos funcionando. 
+ (Leer docker_swarm.txt para más info).
+  
+  Avisos: 1.- Para lanzar los servicios, primero debe existir la red (de tipo overlay) para ello lanzamos:
+                docker network create -d overlay --attachable swarm-net
 
-  docker service create \
-	--name hadoop-slave2 \
-	--network swarm-net \
-	--hostname hadoop-slave2 \
-	--replicas 1 \
-	--endpoint-mode dnsrr \
-	matt68/hadooop-node:3.2
-
-   docker service create \
-	--name hadoop-slave3 \
-	--network swarm-net \
-	--hostname hadoop-slave3 \
-	--replicas 1 \
-	--endpoint-mode dnsrr \
-	matt68/hadooop-node:3.2
+          2.- Para que los comandos funcionen en windows, debemos cambiar el caracter de continuacion  y poner ` (backstick) en lugar de \ (barra)
+    
+ XXXX >>> Start master node
+   docker service create `
+	--name hadoop-master `
+	--network swarm-net `
+	--hostname hadoop-master `
+	--constraint node.role==manager `
+	--replicas 1 `
+	-e TERM=xterm `
+	-t `
+	--endpoint-mode dnsrr `
+	matt68/hadoop-node:3.2
 	
+	
+ XXXX >>>  Start 3 slaves
+  docker service create `
+	--name hadoop-slave1 `
+	--network swarm-net `
+	--hostname hadoop-slave1 `
+	--replicas 1 `
+	--endpoint-mode dnsrr `
+	matt68/hadoop-node:3.2
+
+   docker service create `
+	--name hadoop-slave2 `
+	--network swarm-net `
+	--hostname hadoop-slave2 `
+	--replicas 1 `
+    --detach=true `
+	--endpoint-mode dnsrr `
+	matt68/hadoop-node:3.2
+
+   docker service create `
+	--name hadoop-slave3 `
+	--network swarm-net `
+	--hostname hadoop-slave3 `
+	--replicas 1 `
+	--endpoint-mode dnsrr `
+	matt68/hadoop-node:3.2
+	
+	
+    --detach=true `
 	
 
 	

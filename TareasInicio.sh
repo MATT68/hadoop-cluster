@@ -7,11 +7,14 @@ echo ' ## Levantamos el ssh . . . . .  '
 echo ' ## . . . . . . .  y rsyslogd '
 # kill -9 $(cat /var/run/rsyslogd.pid)
 rsyslogd
-# Lanzamos como usuario hadoop el script de configuracion, formateo 
-# e inicializacion del cluster hadoop
-echo ' ## Lanzamos el script de configuracion de hadoop  ##  '        
-echo ' ## config-format-start-hadoop.sh como el usuario "hadoop"  ##  '        
-su  --command "/config-format-start-hadoop.sh" --shell /bin/bash  hadoop       
-echo ' ## Usuario final al terminar TareasInicio.sh :   ##  '        
-whoami
+# Creamos difectorios para el hdfs-site.xml
+echo ' ## Creamos difectorios para el hdfs-site.xml ##  '
+echo ' ## /home/hadoop/workspace/dfs/name           ##  '
+echo ' ## /home/hadoop/workspace/dfs/data           ##  '
+mkdir /home/hadoop/workspace
+mkdir /home/hadoop/workspace/dfs
+mkdir /home/hadoop/workspace/dfs/name
+mkdir /home/hadoop/workspace/dfs/data
+chown -R hadoop:hadoop /home/hadoop/workspace
+
 echo ' ###>>>> Fin TareasInicio.sh ###  '
